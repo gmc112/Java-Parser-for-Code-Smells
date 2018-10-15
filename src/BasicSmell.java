@@ -38,10 +38,7 @@ public class BasicSmell {
         }
 
         public void visit(MethodDeclaration n, Object arg){
-            n.findAll(Statement.class).stream()
-                    .forEach(f-> {
-                        increment();
-                    });
+            n.findAll(Statement.class).forEach(f-> increment());        // TODO: change to remove double count block
             if(count>10){
                 System.out.println(n);
                 System.out.println("This Method is too long");
@@ -58,9 +55,7 @@ public class BasicSmell {
 
         public void visit(ClassOrInterfaceDeclaration n, Object arg){
             n.findAll(Statement.class).stream()
-                    .forEach(f-> {
-                        increment();
-                    });
+                    .forEach(f->increment());
             if(count>100){
                 System.out.println(n);
                 System.out.println("This Class is too long");
