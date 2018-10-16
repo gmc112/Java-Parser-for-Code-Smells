@@ -3,7 +3,9 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
+import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.body.VariableDeclarator;
+import com.github.javaparser.ast.comments.Comment;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.ast.expr.Name;
@@ -16,19 +18,27 @@ import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 
-public class BasicSmell {
+public class BasicSmells {
     public static void main(String[] args) throws IOException {
-        FileInputStream in = new FileInputStream("Car.java");
+//        FileInputStream in = new FileInputStream("Data/Bloaters/BarnsleyFern.java");   // Use for Large Method
+//        FileInputStream in = new FileInputStream("Data/Bloaters/Bresenham.java");  // Use for Large Class
+        FileInputStream in = new FileInputStream("Data/Bloaters/ManOrBoy.java");  // Use for Long Par. List
         CompilationUnit cu;
         try {
             cu = JavaParser.parse(in);
         } finally {
             in.close();
         }
+        for(Comment c: cu.getComments()){       // Strips out comments from Comp. Unit
+            c.remove();
+        }
 
-        cu.accept(new LargeMethodVisitor(), null);
+//        cu.accept(new LargeMethodVisitor(), null);
+//        cu.accept(new LargeClassVisitor(), null);
+        cu.accept(new LongParListVisitor(), null);
     }
 
     private static class LargeMethodVisitor extends VoidVisitorAdapter {
@@ -38,12 +48,10 @@ public class BasicSmell {
         }
 
         public void visit(MethodDeclaration n, Object arg){
-            n.findAll(Statement.class).forEach(f-> increment());        // TODO: change to remove double count block
-            if(count>10){
+            if(n.findAll(Statement.class).size()-n.findAll(BlockStmt.class).size()>10){
                 System.out.println(n);
-                System.out.println("This Method is too long");
+                System.out.println("This Method is too large");
             }
-            count = 0;
             }
         }
 
@@ -55,12 +63,26 @@ public class BasicSmell {
 
         public void visit(ClassOrInterfaceDeclaration n, Object arg){
             n.findAll(Statement.class).stream()
-                    .forEach(f->increment());
+                    .forEach(f-> increment());
+            n.findAll(VariableDeclarator.class).stream()
+                    .forEach(f-> increment());
+            n.findAll(Parameter.class).stream()
+                    .forEach(f-> increment());
             if(count>100){
                 System.out.println(n);
                 System.out.println("This Class is too long");
+                System.out.println("-----------------------");
             }
             count = 0;
+        }
+    }
+    private static class LongParListVisitor extends VoidVisitorAdapter{
+        public void visit(MethodDeclaration n, Object arg){
+            if(n.findAll(Parameter.class).size()>5) {
+                System.out.println(n);
+                System.out.println("This method has too many parameters");
+                System.out.println("-----------------------------------");
+            }
         }
     }
 
