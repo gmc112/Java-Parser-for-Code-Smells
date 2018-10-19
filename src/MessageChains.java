@@ -22,7 +22,6 @@ public class MessageChains {
                 for (Comment c : cu.getComments()) {       // Strips out comments from Comp. Unit
                     c.remove();
                 }
-
                 cu.accept(new MessageChainsVisitor(), null);
             }
         }

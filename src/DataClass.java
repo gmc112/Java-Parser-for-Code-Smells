@@ -21,7 +21,7 @@ import java.util.Optional;
 public class DataClass {
     private boolean flag = false;
     public static void main(String[] args) throws IOException {
-        SourceRoot src = new SourceRoot(FileSystems.getDefault().getPath("Data\\Dispensibles\\a"));
+        SourceRoot src = new SourceRoot(FileSystems.getDefault().getPath("Data"));
         List<ParseResult<CompilationUnit>> parseResults = src.tryToParse();
 
         for(ParseResult<CompilationUnit> p: parseResults)
