@@ -16,7 +16,7 @@ import java.util.List;
 
 public class PrimitiveObsession {
     public static void main(String[] args) throws IOException {
-        SourceRoot src = new SourceRoot(FileSystems.getDefault().getPath("Data\\Bloaters"));
+        SourceRoot src = new SourceRoot(FileSystems.getDefault().getPath("Data"));
         List<ParseResult<CompilationUnit>> parseResults = src.tryToParse();
         for(ParseResult<CompilationUnit> p: parseResults) {
             if (p.isSuccessful()) {
@@ -46,7 +46,7 @@ public class PrimitiveObsession {
                             iterateQ();
                     });
             if(p>0)
-                if(p/(p+q)>0.6) {
+                if(p/(p+q)>0.8 && p+q>3) {
                     System.out.println("---------------------------------");
                     System.out.println(n.clone().removeBody());
                     System.out.println("This method is Primitive Obsessed");

@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Optional;
 
 public class LazyClass {
-    private boolean flag = false;
     public static void main(String[] args) throws IOException {
         SourceRoot src = new SourceRoot(FileSystems.getDefault().getPath("Data"));
         List<ParseResult<CompilationUnit>> parseResults = src.tryToParse();
@@ -30,74 +29,43 @@ public class LazyClass {
                 for (Comment c : cu.getComments()) {       // Strips out comments from Comp. Unit
                     c.remove();
                 }
-
                 cu.accept(new LazyClass.LazyClassVisitor(), null);
             }
     }
 
     private static class LazyClassVisitor extends VoidVisitorAdapter {
-        private boolean flag;
-        private int fieldCount;
-        private int getterCount;
-        private int setterCount;
         public void visit(ClassOrInterfaceDeclaration n, Object arg){
             super.visit(n, arg);
-            flag = false;
-            fieldCount = n.getFields().size();
-            getterCount = 0;
-            setterCount = 0;
             if(n.isInterface())
                 return;
-            if(!hasMethods(n)){
-                System.out.println(n);
+            if (hasComplexStm(n)){
+                return;
+            } else if(!checkMethods(n)){
+                System.out.println("-----------------------");
+                System.out.println(n.getName());
                 System.out.println("This is a Lazy Class");
-            }
-            else if (!hasNonComplexStm(n)){
-                System.out.println(n);
-                System.out.println("This is a Lazy Class");
-                flag = false;
-            }
-
-            // ToDo: Add Method to check for getters and setters
-            List<ClassOrInterfaceDeclaration> lc = n.findAll(ClassOrInterfaceDeclaration.class);
-            lc.remove(n);
-            for(ClassOrInterfaceDeclaration c: lc){
-                super.visit(c, null);
-                flag = false;
-            }
-
-
-        }
-
-        private boolean hasNonComplexStm(ClassOrInterfaceDeclaration n) {
-            n.findAll(MethodDeclaration.class).forEach(f->{
-                if(!f.isDefault()){
-                    f.findAll(Statement.class).forEach(g-> checkBlock(g));
-                }
-            });
-            return flag;
-        }
-
-        private void checkBlock(Statement g){
-            if(!g.isBlockStmt() && !g.isExpressionStmt() && !g.isReturnStmt()){
-                setFlag();
-            } else if(g.isBlockStmt()){
-                BlockStmt b = g.asBlockStmt();
-//                checkBlock(b);
+                System.out.println("-----------------------");
             }
         }
-
-        private void setFlag() {
-            flag = true;
-        }
-
-
-        private boolean hasMethods(ClassOrInterfaceDeclaration n){
+        private boolean checkMethods(ClassOrInterfaceDeclaration n){
             List<MethodDeclaration> lm = n.findAll(MethodDeclaration.class);       // Does it have no methods excluding constructors
             for(MethodDeclaration m: lm)
                 if(m.isDefault())
                     lm.remove(m);
-            return !lm.isEmpty();
+            return lm.size()>4;
         }
+        private boolean hasComplexStm(ClassOrInterfaceDeclaration n) {
+            for(MethodDeclaration m: n.findAll(MethodDeclaration.class)){
+                m = m.clone();
+                m.remove(m);
+                if(!m.isDefault()){
+                    int b = m.findAll(BlockStmt.class).size();
+                    if(m.findAll(Statement.class).size()-b>4 && b!=0)
+                        return true;
+                }
+            }
+            return false;
+        }
+
     }
 }

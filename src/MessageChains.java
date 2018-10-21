@@ -32,7 +32,6 @@ public class MessageChains {
             super.visit(n, arg);
             List<MethodCallExpr> lm = n.findAll(MethodCallExpr.class);
             lm.remove(n);
-            System.out.println(n.getScope());
             for(MethodCallExpr m: lm){
                 for(MethodCallExpr o: m.findAll(MethodCallExpr.class)){
                     if((o.getScope()!= m.getScope())&&(m.getScope()!= n.getScope())&&(n.getScope()!= o.getScope())){

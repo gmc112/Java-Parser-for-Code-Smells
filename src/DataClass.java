@@ -10,7 +10,6 @@ import com.github.javaparser.ast.stmt.BlockStmt;
 import com.github.javaparser.ast.stmt.Statement;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.github.javaparser.utils.SourceRoot;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -43,43 +42,30 @@ public class DataClass {
 
             if(n.isInterface()){
                 return;
-//            if(!hasMethods(n)){
-//                System.out.println(n);
-//                System.out.println("This is a Data Class");
-//            }
-//            else if (!hasNonGetSet(n)){
-//                System.out.println(n);
-//                System.out.println("This is a Data Class");
-//                flag = false;
             } else{
                 int fieldCount = 0;
                 for(FieldDeclaration field: n.getFields())
                     fieldCount = fieldCount + field.getVariables().size();
-//                System.out.println(n);
-//                System.out.println(fieldCount);
                 int getterCount = 0;
                 int setterCount = 0;
                 boolean flag = true;
                 for(MethodDeclaration m: n.findAll(MethodDeclaration.class)){
-                    System.out.println(m.clone().removeBody());
                     if(isGet(m)) {
                         getterCount++;
                     } else if(isSet(m)) {
                         setterCount++;
-                    } else if(!isToString(m) || !m.isDefault()){
+                    } else if(!isToString(m) || !m.isDefault() || !isEquals(m) || !isHashCode(m)){
                         flag = false;
                         break;
                     }
 
                 }
-                System.out.println(getterCount);
                 if((getterCount<=fieldCount&&setterCount<=fieldCount) && flag) {
-                    System.out.println(n);
+                    System.out.println(n.getName());
                     System.out.println("This is a Data Class");
                 }
             }
 
-            // ToDo: Add Method to check for getters and setters
             List<ClassOrInterfaceDeclaration> lc = n.findAll(ClassOrInterfaceDeclaration.class);
             lc.remove(n);
             for(ClassOrInterfaceDeclaration c: lc){
@@ -88,69 +74,50 @@ public class DataClass {
 
 
         }
-
-//        private boolean hasNonGetSet(ClassOrInterfaceDeclaration n) {
-//            n.findAll(MethodDeclaration.class).forEach(f->{
-//                        if(!f.isDefault()){
-//                            f.findAll(Statement.class).forEach(g-> checkBlock(g));
-//                        }
-//            });
-//            return flag;
-//        }
-
         private boolean isToString(MethodDeclaration n){
             return n.getNameAsString().equals("toString");
         }
+        private boolean isHashCode(MethodDeclaration n){
+            return n.getNameAsString().equals("hashCode");
+        }
+        private boolean isEquals(MethodDeclaration n){
+            return n.getNameAsString().equals("equals");
+        }
         private boolean isGet(MethodDeclaration n) {
-            List<Statement> ls = n.getBody().get().findAll(Statement.class);
-            ls.remove(0);
-            System.out.println(ls);
-            if (ls.size() != 1)
-                return false;
-
-            return ls.get(0).isReturnStmt();
+            if(n.getParameters().size()==0)
+                if(n.getBody().isPresent()){
+                    List<Statement> ls = n.getBody().get().findAll(Statement.class);
+                    ls.remove(0);
+                    if (ls.size() != 1)
+                        return false;
+                    return ls.get(0).isReturnStmt();
+                }
+            return false;
         }
 
         private boolean isSet(MethodDeclaration n){
-            List<Parameter> lp = n.getParameters();
-            int i = 0;
-            List<Statement> ls = n.getBody().get().findAll(Statement.class);
-            ls.remove(0);
-            for(Statement s: ls) {
-
-                if(i<=lp.size()) {
-                    if (!s.isExpressionStmt()) {
-                        return false;
-                    } else{
-                        Expression e = s.asExpressionStmt().getExpression();
-                        if(!e.isAssignExpr())
-                            return false;
+            if(n.getBody().isPresent()) {
+                List<Parameter> lp = n.getParameters();
+                if(lp.size()== 1){
+                    int i = 0;
+                    List<Statement> ls = n.getBody().get().findAll(Statement.class);
+                    ls.remove(0);
+                    for (Statement s : ls) {
+                        if (i <= lp.size()) {
+                            if (!s.isExpressionStmt()) {
+                                return false;
+                            } else {
+                                Expression e = s.asExpressionStmt().getExpression();
+                                if (!e.isAssignExpr())
+                                    return false;
+                            }
+                            i++;
+                        }
                     }
-                    i++;
+                    return true;
                 }
             }
-            return true;
-        }
-//        private void checkBlock(Statement g){
-//            if(!g.isBlockStmt() && !g.isExpressionStmt() && !g.isReturnStmt()){
-//                setFlag();
-//            } else if(g.isBlockStmt()){
-//                BlockStmt b = g.asBlockStmt();
-////                checkBlock(b);
-//            }
-//        }
-
-//        private void setFlag() {
-//            flag = true;
-//        }
-
-
-        private boolean hasMethods(ClassOrInterfaceDeclaration n){
-            List<MethodDeclaration> lm = n.findAll(MethodDeclaration.class);       // Does it have no methods excluding constructors
-            for(MethodDeclaration m: lm)
-                if(m.isDefault())
-                    lm.remove(m);
-            return !lm.isEmpty();
+            return false;
         }
     }
 }

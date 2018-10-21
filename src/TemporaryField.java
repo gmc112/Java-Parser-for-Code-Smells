@@ -54,22 +54,21 @@ public class TemporaryField {
 //                System.out.println(m.get());
                 for(Node node:m.getChildNodes()) {
 //                    System.out.println(node);
-                    System.out.println("=============");
+
                     for (VariableDeclarationExpr v : node.findAll(VariableDeclarationExpr.class)) {
                         for (VariableDeclarator vd : v.getVariables()) {
                             if (varMap.containsKey(vd)) {
-                                System.out.println("test");
                                 varMap.put(vd, varMap.get(vd) + 1);
                             }
                         }
 
                     }
                 }
-                System.out.println("------------------");
             }
 //            System.out.println(varMap);
             varMap.forEach((f, g)->{
                 if(g<=1){
+                    System.out.println(n.getName());
                     System.out.println(f);
                     System.out.println("This is a temporary field");
                     System.out.println("-------------------------");
